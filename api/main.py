@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from . import db
+from .routes import router
+
+app = FastAPI(title="ADF&G Fish Counts API")
+
+app.include_router(router)
+
 
 @app.get("/api/health")
-def get_health():
-    return {"Health"}
-
-@app.get("/api/locations")
-def get_locations():
-    return {"Hello": "World"}
+def health():
+    return {"status": "ok", "database": db.ping()}

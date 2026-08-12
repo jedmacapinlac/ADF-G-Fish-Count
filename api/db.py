@@ -11,6 +11,5 @@ engine = create_engine(
 
 
 def ping() -> bool:
-    """True if the database answers. Cheap enough for a health endpoint."""
     with engine.connect() as conn:
         return conn.execute(text("SELECT 1")).scalar() == 1
