@@ -1,7 +1,9 @@
 from fastapi import APIRouter
+from sqlalchemy import text
+
+from .db import engine
 
 router = APIRouter(prefix="/api", tags=["fish counts"])
-
 
 @router.get("/locations")
 def list_locations():
@@ -18,24 +20,60 @@ def list_locations():
       - GeoJSON coordinates are [longitude, latitude], not [lat, lon].
       - Yentna River (43) has no coordinates. Decide: omit, or null geometry.
     """
-    raise NotImplementedError
 
-
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT name, 
+                    latitude, 
+                    longitude,
+                    location_id
+                FROM locations
+            """)
+        ).mappings().all()
+        features = []
+        for row in rows:
+            features.append({
+                "type": "Feature",
+                "geometry": { "type": "Point", "coordinates": [row["longitude"], row["latitude"]] },
+                "properties": { "location_id": row["location_id"], "name": row["name"] }    
+            })
+        return {"type" : "FeatureCollection", "features" : features}
+            
 @router.get("/species")
 def list_species():
     """The 11 species, for a global 'all sockeye sites' style filter."""
-    raise NotImplementedError
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+            SELECT species_id, name 
+                FROM species 
+                ORDER BY name
+            """)
+        ).mappings().all()
+    return [dict(row) for row in rows]
 
 
 @router.get("/locations/{location_id}/series")
 def list_series_for_location(location_id: int):
-    """What one site offers: species, run, and the year range for each.
-
-    May turn out to be redundant with /locations if that endpoint already
-    embeds the series. Decide whether the map payload is fat and self-sufficient
-    or thin with follow-up requests.
-    """
-    raise NotImplementedError
+    """What one site offers: species, run, and the year range for each."""
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT sp.species_id,
+                       sp.name AS species_name,
+                       s.run,
+                       s.first_year,
+                       s.last_year,
+                       s.n_records
+                FROM series s
+                JOIN species sp USING (species_id)
+                WHERE s.location_id = :location_id
+                ORDER BY sp.name
+            """),
+            {"location_id": location_id},
+        ).mappings().all()
+    return [dict(row) for row in rows]
 
 
 @router.get("/counts")
@@ -51,7 +89,26 @@ def list_counts(location_id: int, species_id: int, year_from: int, year_to: int)
     fish_count is nullable: NULL means no count was taken that day, which is
     different from 0. Do not coerce one into the other.
     """
-    raise NotImplementedError
+
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT fish_count, 
+                    count_date 
+                FROM daily_counts
+                WHERE location_id = :location_id
+                    AND species_id = :species_id
+                    AND year >= :year_from 
+                    AND year <= :year_to
+                ORDER BY count_date
+            """),
+            {"location_id" : location_id,
+             "species_id": species_id,
+             "year_from": year_from,
+             "year_to": year_to
+            }
+        ).mappings().all()
+    return [dict(row) for row in rows]
 
 
 @router.get("/annual")
@@ -60,7 +117,23 @@ def list_annual(location_id: int, species_id: int):
 
     Aggregate in SQL (GROUP BY year), not in Python. The database should return
     roughly what the chart plots.
-
-    Note 2026 is a partial, in-progress season and will read low.
     """
-    raise NotImplementedError
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT year,
+                       SUM(fish_count)   AS total_count,
+                       COUNT(fish_count) AS days_counted,
+                       MAX(fish_count)   AS peak_count
+                FROM daily_counts
+                WHERE location_id = :location_id
+                  AND species_id = :species_id
+                GROUP BY year
+                ORDER BY year
+            """),
+            {"location_id" : location_id,
+             "species_id" : species_id,
+            }
+        ).mappings().all()
+        return [dict(row) for row in rows]
+
