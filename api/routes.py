@@ -10,22 +10,22 @@ def list_locations():
     """GeoJSON FeatureCollection of the counting sites — drives the map.
 
     One feature per location: a Point geometry built from locations.latitude /
-    longitude, and properties carrying the location id, the name, and the series
-    available there (species name, run, first_year, last_year) so clicking a pin
-    can fill the filter menus without a second request.
+    longitude, plus the location id and name in properties. The series offered at
+    a site are fetched on demand from /locations/{id}/series when a pin is
+    clicked, rather than being inlined here.
 
-    Join locations -> series -> species.
+    Sites with no coordinates (Yentna River, 43) are emitted with a null
+    geometry. That is valid GeoJSON — Leaflet skips such features when drawing —
+    and it keeps the site present in the response for non-map views.
 
-    Watch out:
-      - GeoJSON coordinates are [longitude, latitude], not [lat, lon].
-      - Yentna River (43) has no coordinates. Decide: omit, or null geometry.
+    Note: GeoJSON coordinates are [longitude, latitude], not [lat, lon].
     """
 
     with engine.connect() as conn:
         rows = conn.execute(
             text("""
-                SELECT name, 
-                    latitude, 
+                SELECT name,
+                    latitude,
                     longitude,
                     location_id
                 FROM locations
@@ -33,10 +33,17 @@ def list_locations():
         ).mappings().all()
         features = []
         for row in rows:
+            if row["latitude"] is None or row["longitude"] is None:
+                geometry = None
+            else:
+                geometry = {
+                    "type": "Point",
+                    "coordinates": [row["longitude"], row["latitude"]],
+                }
             features.append({
                 "type": "Feature",
-                "geometry": { "type": "Point", "coordinates": [row["longitude"], row["latitude"]] },
-                "properties": { "location_id": row["location_id"], "name": row["name"] }    
+                "geometry": geometry,
+                "properties": { "location_id": row["location_id"], "name": row["name"] }
             })
         return {"type" : "FeatureCollection", "features" : features}
             
