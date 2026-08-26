@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+/* By default Tailwind's `dark:` variant follows the OS `prefers-color-scheme`,
+   which put the whole app in dark mode for anyone whose system is set that way.
+   Rebinding it to a `.dark` ancestor keeps the dark styling in the components
+   without it firing — nothing adds that class yet, so the app is light-only
+   until we add a theme toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* The accent, used for whatever is currently selected — the active tab, the
+   picked site, the picked series, the selected map pin. A desaturated sage
+   rather than a saturated green, so it reads as a highlight against the stone
+   greys without competing with the data itself. */
+@theme {
+  --color-sage-50: #f5f8f3;
+  --color-sage-100: #e8f0e3;
+  --color-sage-200: #d3e2ca;
+  --color-sage-300: #b3cca6;
+  --color-sage-400: #8faf7f;
+  --color-sage-500: #71945f;
+  --color-sage-600: #59784a;
+  --color-sage-700: #465f3c;
+  --color-sage-800: #3a4d33;
+  --color-sage-900: #30402c;
+  --color-sage-950: #1a2417;
+}

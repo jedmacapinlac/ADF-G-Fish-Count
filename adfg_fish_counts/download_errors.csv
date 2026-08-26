@@ -1,0 +1,2 @@
+﻿metadata_location_name,metadata_series_label,start_year,end_year,error_type,error_message
+Ninilchik River,chinook late run,2024,2024,NoRecordsError,"ADF&G returned zero rows after five-year and single-year retries. Resolved mapping: Ninilchik River [75] + Chinook - Late Run [412], years 2024-2024."
