@@ -1,6 +1,14 @@
 import { useState } from 'react'
 
-import { seriesLabel } from './format'
+import { formatDate, seriesLabel } from './format'
+import {
+  CalendarCheckIcon,
+  CalendarDaysIcon,
+  MedalIcon,
+  PeakIcon,
+  SpanIcon,
+  TrendingUpIcon,
+} from './icons'
 import StatCard from './StatCard'
 import { CONTROL, LABEL } from './styles'
 import { useApi } from './useApi'
@@ -36,11 +44,17 @@ export default function KeyDetails({ site, series }: Props) {
     `/api/annual?location_id=${site.properties.location_id}&species_id=${series.species_id}`
   )
 
-  const { data: peak, error: peakError } = useApi<CountRow[]>(
+  const { data: dailyRows, error: dailyRowError } = useApi<CountRow[]>(
     `/api/counts?location_id=${site.properties.location_id}&species_id=${series.species_id}&year_from=${year}&year_to=${year}`
   )
-  const error = annualError ?? peakError
+  const error = annualError ?? dailyRowError
   const row = (annual ?? []).find((r) => r.year === year)
+  const peakDates = (dailyRows ?? []).filter((r) => r.fish_count === row?.peak_count)
+  const countedDays = (dailyRows ?? []).filter((r) => r.fish_count !== null)
+  const rankedYears = [...(annual ?? [])].sort(
+    (a, b) => (b.total_count ?? -Infinity) - (a.total_count ?? -Infinity),
+  )
+  const rank = row === undefined ? null : rankedYears.findIndex((r) => r.year === year) + 1
 
   const years = Array.from(
     { length: series.last_year - series.first_year + 1 },
@@ -53,33 +67,46 @@ export default function KeyDetails({ site, series }: Props) {
     hint?: string
     delta?: number | null
     deltaLabel?: string
+    icon: React.ComponentType<{ className?: string }>
   }[] = [
     {
-      label: 'Total run',
+      label: `${year} Total`,
       value: row?.total_count ?? null,
-      hint: `Escapement in ${year}`,
+      hint: countedDays.length === 0
+        ? undefined
+        : `Through ${formatDate(countedDays[countedDays.length - 1].count_date)}`,
       delta: null,
       deltaLabel: 'vs. series mean',
+      icon: TrendingUpIcon,
     },
-    { label: 'Peak day', 
-      value: row?.peak_count ?? null, 
-      hint: 'Highest single-day count' 
+    { label: `Peak day (${year})`,
+      value: row?.peak_count ?? null,
+      hint: 'Highest single-day count',
+      icon: PeakIcon,
     },
-    { label: 'Peak date', 
-      value: null, hint: 
-      'When the run crested' 
+    { label: 'Peak date',
+      value: peakDates.length === 0
+        ? null
+        : formatDate(peakDates[0].count_date) + (peakDates.length > 1 ? ` (+${peakDates.length - 1})` : ''),
+      hint: 'When the run crested',
+      icon: CalendarCheckIcon,
     },
     { label: 'Days counted',
-      value: null, 
-      hint: `Days with a count in ${year}` 
+      value: row?.days_counted ?? null,
+      hint: `Days with a count in ${year}`,
+      icon: CalendarDaysIcon,
     },
-    { label: 'Season span', 
-      value: null, 
-      hint: 'First to last count' 
+    { label: 'Season span',
+      value: countedDays.length === 0
+      ? null
+      : `${formatDate(countedDays[0].count_date)}–${formatDate(countedDays[countedDays.length - 1].count_date)}`,
+      hint: 'First to last count',
+      icon: SpanIcon,
     },
-    { label: 'Rank', 
-      value: null,
-      hint: `Of ${years.length} years on record` 
+    { label: 'Rank',
+      value: rank,
+      hint: `Of ${years.length} years on record`,
+      icon: MedalIcon,
     },
   ]
 

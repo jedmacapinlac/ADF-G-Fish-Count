@@ -1,4 +1,4 @@
-import { formatCount } from './format'
+import { formatCount, formatDate } from './format'
 import { TD, TH } from './styles'
 import { useApi } from './useApi'
 import type { CountRow } from './types'
@@ -59,7 +59,9 @@ export default function DailyCounts({ locationId, speciesId, yearFrom, yearTo }:
               <tbody>
                 {rows.slice(0, DAILY_ROW_LIMIT).map((row) => (
                   <tr key={row.count_date} className="border-b border-stone-200 last:border-0">
-                    <td className={`${TD} pl-3 text-stone-900`}>{row.count_date}</td>
+                    <td className={`${TD} pl-3 text-stone-900`}>
+                      {formatDate(row.count_date, { year: true })}
+                    </td>
                     <td className={TD}>{formatCount(row.fish_count)}</td>
                   </tr>
                 ))}

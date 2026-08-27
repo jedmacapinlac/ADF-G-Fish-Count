@@ -17,6 +17,24 @@ export function formatCompact(value: number | null): string {
   return value.toLocaleString(undefined, { notation: 'compact', maximumFractionDigits: 1 })
 }
 
+/** A count_date ("2013-07-08") as a short display date ("Jul 8").
+ *
+ *  Appending a time before parsing keeps the Date in the local timezone —
+ *  `new Date("2013-07-08")` alone parses as UTC midnight, which renders a day
+ *  early west of UTC.
+ *
+ *  `year` is off by default: these dates are almost always shown already
+ *  scoped to one selected year, so repeating it is noise. Pass true where the
+ *  surrounding range can span multiple years.
+ */
+export function formatDate(value: string, { year = false }: { year?: boolean } = {}): string {
+  return new Date(`${value}T00:00:00`).toLocaleDateString(undefined, {
+    year: year ? 'numeric' : undefined,
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 /** How a series is named in the UI.
  *
  *  ADF&G bakes the run into its species names ("Sockeye - Late Run"), and the

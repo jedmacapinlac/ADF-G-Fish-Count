@@ -10,18 +10,21 @@ type Props = {
    *  run is the good direction for every figure on this dashboard. */
   delta?: number | null
   deltaLabel?: string
+  icon?: React.ComponentType<{ className?: string }>
 }
 
-/** One tile in the key-details row: a label, a number, and a line of context.
+/** One tile in the key-details row: an icon, a label, a number, and a line of
+ *  context.
  *
  *  Presentational only — it never fetches. Whatever computes the value owns it.
  */
-export default function StatCard({ label, value, hint, delta, deltaLabel }: Props) {
+export default function StatCard({ label, value, hint, delta, deltaLabel, icon: Icon }: Props) {
   const shown = typeof value === 'number' ? formatCompact(value) : (value ?? '—')
 
   return (
-    <div className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5">
-      <p className="text-xs font-semibold tracking-wide text-stone-600 uppercase">{label}</p>
+    <div className="rounded-xl border border-stone-300 bg-stone-50 px-3 py-2.5 text-center shadow-lg shadow-sage-500/30">
+      {Icon !== undefined && <Icon className="mx-auto h-5 w-5 text-stone-400" />}
+      <p className="mt-1 text-xs font-semibold tracking-wide text-stone-600 uppercase">{label}</p>
 
       {/* title carries the exact figure when formatCompact has abbreviated it. */}
       <p

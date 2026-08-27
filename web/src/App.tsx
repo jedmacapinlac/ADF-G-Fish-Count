@@ -87,6 +87,7 @@ function App() {
         <main className="flex min-h-0 flex-1 flex-col">
           <FilterBar
             species={species}
+            locationId={selectedId}
             speciesId={speciesId}
             onSpeciesChange={setSpeciesId}
             yearFrom={yearFrom}
