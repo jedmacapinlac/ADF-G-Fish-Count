@@ -32,13 +32,14 @@ export default function KeyDetails({ site, series }: Props) {
   // Most recent season first — the default anyone wants on opening a site.
   const [year, setYear] = useState(series.last_year)
 
-  const { data: annual, error } = useApi<AnnualRow[]>(
+  const { data: annual, error: annualError } = useApi<AnnualRow[]>(
     `/api/annual?location_id=${site.properties.location_id}&species_id=${series.species_id}`
   )
 
-  const { data: peak, error } = useApi<CountRow[]>(
+  const { data: peak, error: peakError } = useApi<CountRow[]>(
     `/api/counts?location_id=${site.properties.location_id}&species_id=${series.species_id}&year_from=${year}&year_to=${year}`
   )
+  const error = annualError ?? peakError
   const row = (annual ?? []).find((r) => r.year === year)
 
   const years = Array.from(
