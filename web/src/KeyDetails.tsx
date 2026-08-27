@@ -62,7 +62,7 @@ export default function KeyDetails({ site, series }: Props) {
       deltaLabel: 'vs. series mean',
     },
     { label: 'Peak day', 
-      value: null, 
+      value: row?.peak_count ?? null, 
       hint: 'Highest single-day count' 
     },
     { label: 'Peak date', 
