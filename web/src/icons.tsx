@@ -85,6 +85,15 @@ export function SpanIcon(props: IconProps) {
   )
 }
 
+/** A chart that hasn't been wired up yet — bars of undecided height. */
+export function ChartPlaceholderIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M4 20V10M10 20V4M16 20V13M22 20V7" />
+    </IconBase>
+  )
+}
+
 /** Rank: a medal. */
 export function MedalIcon(props: IconProps) {
   return (

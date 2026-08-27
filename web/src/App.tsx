@@ -84,7 +84,7 @@ function App() {
           <SiteList sites={sites} selectedId={selectedId} onSelect={setSelectedId} />
         </aside>
 
-        <main className="flex min-h-0 flex-1 flex-col">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col">
           <FilterBar
             species={species}
             locationId={selectedId}

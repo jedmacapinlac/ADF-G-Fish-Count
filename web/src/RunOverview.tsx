@@ -1,3 +1,4 @@
+import ChartGallery from './ChartGallery'
 import { formatCount } from './format'
 import { TD, TH } from './styles'
 import { useApi } from './useApi'
@@ -25,12 +26,15 @@ export default function RunOverview({ locationId, speciesId, yearFrom, yearTo }:
 
       {error !== null && <p className="mt-2 font-mono text-sm text-red-700">{error}</p>}
       {error === null && data === null && <p className="mt-2 text-sm text-stone-700">Loading…</p>}
+
+      <ChartGallery />
+
       {data !== null && rows.length === 0 && (
-        <p className="mt-2 text-sm text-stone-700">No years in the selected range.</p>
+        <p className="mt-4 text-sm text-stone-700">No years in the selected range.</p>
       )}
 
       {rows.length > 0 && (
-        <div className="mt-2 max-h-96 w-full overflow-y-auto rounded-lg border border-stone-300 bg-stone-50">
+        <div className="mt-4 max-h-40 w-full overflow-y-auto rounded-lg border border-stone-300 bg-stone-50">
           <table className="w-full">
             <thead className="sticky top-0 border-b border-stone-300 bg-stone-100">
               <tr>
