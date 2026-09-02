@@ -8,6 +8,8 @@ import {
   Rectangle,
   ResponsiveContainer,
   Tooltip,
+  useXAxisScale,
+  useYAxisScale,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -34,16 +36,71 @@ function median(values: number[]): number {
 
 /** For each year, the median total_count of up to the 5 preceding years
  *  that are on this same (already filtered) chart — "no data" years don't
- *  count toward the 5, and a year with nothing before it to draw from gets
- *  no median rather than one padded with itself. */
+ *  count toward the 5. A year with nothing before it to draw from (the
+ *  first year on the chart, or a leading stretch of no-data years) falls
+ *  back to its own total, so the line still starts at the first bar
+ *  instead of opening with a gap. */
 function withTrailingMedian(rows: AnnualRow[]): PlotRow[] {
   const priorTotals: number[] = []
   return rows.map((row) => {
     const window = priorTotals.slice(-TRAILING_WINDOW)
-    const trailing_median = window.length === 0 ? null : median(window)
+    const trailing_median = window.length === 0 ? row.total_count : median(window)
     if (row.total_count !== null) priorTotals.push(row.total_count)
     return { ...row, trailing_median }
   })
+}
+
+/** The median Line's own points sit at each bar's horizontal middle (the
+ *  band's 'middle' position), which reads as if the line stops short at the
+ *  first and last bars instead of spanning the chart. This draws two short,
+ *  non-interactive continuations from each end point out to that bar's
+ *  'start'/'end' band edge, extrapolating the neighboring segment's slope so
+ *  they read as part of the same line rather than a flat stub. Rendered as a
+ *  plain child of ComposedChart — recharts 3.x wires chart context to any
+ *  descendant via hooks, no <Customized> wrapper needed. */
+function MedianLineEdges({ data }: { data: PlotRow[] }) {
+  const xScale = useXAxisScale()
+  const yScale = useYAxisScale()
+
+  if (xScale === undefined || yScale === undefined) return null
+
+  const firstIdx = data.findIndex((d) => d.trailing_median !== null)
+  const lastIdx = data.length - 1 - [...data].reverse().findIndex((d) => d.trailing_median !== null)
+  if (firstIdx === -1 || firstIdx === lastIdx) return null
+
+  const point = (i: number, position: 'start' | 'middle' | 'end') => ({
+    x: xScale(data[i].year, { position }),
+    y: yScale(data[i].trailing_median),
+  })
+
+  const start = point(firstIdx, 'middle')
+  const next = point(firstIdx + 1, 'middle')
+  const startEdge = xScale(data[firstIdx].year, { position: 'start' })
+
+  const end = point(lastIdx, 'middle')
+  const prev = point(lastIdx - 1, 'middle')
+  const endEdge = xScale(data[lastIdx].year, { position: 'end' })
+
+  if (
+    start.x === undefined || start.y === undefined || next.x === undefined || next.y === undefined ||
+    startEdge === undefined || end.x === undefined || end.y === undefined ||
+    prev.x === undefined || prev.y === undefined || endEdge === undefined
+  ) {
+    return null
+  }
+
+  const startSlope = (next.y - start.y) / (next.x - start.x)
+  const startY = start.y - startSlope * (start.x - startEdge)
+
+  const endSlope = (end.y - prev.y) / (end.x - prev.x)
+  const endY = end.y + endSlope * (endEdge - end.x)
+
+  return (
+    <g stroke={MEDIAN_BLUE} strokeWidth={2} strokeLinecap="round" pointerEvents="none">
+      <line x1={startEdge} y1={startY} x2={start.x} y2={start.y} />
+      <line x1={end.x} y1={end.y} x2={endEdge} y2={endY} />
+    </g>
+  )
 }
 
 type TooltipProps = {
@@ -146,6 +203,7 @@ export default function TotalRunByYearChart({ rows }: Props) {
           connectNulls={false}
           isAnimationActive={false}
         />
+        <MedianLineEdges data={data} />
       </ComposedChart>
     </ResponsiveContainer>
   )

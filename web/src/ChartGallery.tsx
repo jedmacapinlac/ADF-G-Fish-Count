@@ -1,4 +1,5 @@
 import { ChartPlaceholderIcon } from './icons'
+import RunTimingChart from './RunTimingChart'
 import TotalRunByYearChart from './TotalRunByYearChart'
 import type { AnnualRow } from './types'
 
@@ -7,8 +8,7 @@ import type { AnnualRow } from './types'
  *  Peak Count, Days Counted, and Cumulative Run all come straight from the
  *  /api/annual rows this tab already fetches, same as Total Run. Run Size vs.
  *  Series Average and Best and Worst Years need that same data compared
- *  against its own mean. Run Timing needs the daily rows instead — same data
- *  gap the Timing tab's Unbuilt note already describes.
+ *  against its own mean.
  *
  *  Swap a tile's placeholder body for the real chart once it's wired up; the
  *  title and square footprint can stay as-is. */
@@ -18,21 +18,28 @@ const PLACEHOLDER_CHARTS = [
   'Run Size vs. Series Average',
   'Best and Worst Years',
   'Cumulative Run to Date',
-  'Run Timing by Year',
 ]
 
 type Props = {
   rows: AnnualRow[]
+  locationId: number
+  speciesId: number
+  yearFrom: number
+  yearTo: number
 }
 
 /** A horizontally scrolling row of big square chart tiles under Run
  *  Overview's table — one tile per chart this tab wants eventually, each
  *  just a title and an empty body until something draws into it. */
-export default function ChartGallery({ rows }: Props) {
+export default function ChartGallery({ rows, locationId, speciesId, yearFrom, yearTo }: Props) {
   return (
     <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
       <ChartTile title="Total Run by Year">
         <TotalRunByYearChart rows={rows} />
+      </ChartTile>
+
+      <ChartTile title="Run Timing by Year">
+        <RunTimingChart locationId={locationId} speciesId={speciesId} yearFrom={yearFrom} yearTo={yearTo} />
       </ChartTile>
 
       {PLACEHOLDER_CHARTS.map((title) => (

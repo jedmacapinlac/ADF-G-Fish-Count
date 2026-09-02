@@ -47,3 +47,18 @@ export type CountRow = {
   count_date: string
   fish_count: number | null
 }
+
+/** A row from /api/timing — one counted day, with its running share of that
+ *  year's total. No-count days are excluded server-side entirely (they never
+ *  appear as a row), so every row here is a real, counted day.
+ *
+ *  pct_of_total is only null in the edge case where a year's total is
+ *  legitimately zero (every day counted, every count zero) — nothing to take
+ *  a percentage of. */
+export type TimingRow = {
+  year: number
+  count_date: string
+  day_of_year: number
+  cumulative_count: number
+  pct_of_total: number | null
+}
