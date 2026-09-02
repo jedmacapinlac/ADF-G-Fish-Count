@@ -96,7 +96,7 @@ export default function RunTimingChart({ locationId, speciesId, yearFrom, yearTo
           <span className="ml-2 inline-block h-0.5 w-2.5" style={{ backgroundColor: CONTEXT_GRAY }} />
           Other years
         </p>
-        <label className="flex items-center gap-1.5">
+        <label className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           <span className={LABEL}>Year</span>
           <select
             value={highlightYear}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { fetchJson, isAbortError, toMessage } from './api'
 import FilterBar from './FilterBar'
+import { ChevronLeftIcon } from './icons'
 import SiteDetail from './SiteDetail'
 import SiteList from './SiteList'
 import SiteMap from './SiteMap'
@@ -17,6 +18,8 @@ function App() {
   const [features, setFeatures] = useState<LocationFeature[] | null>(null)
   const [species, setSpecies] = useState<Species[]>([])
   const [error, setError] = useState<string | null>(null)
+
+  const [sitePanelCollapsed, setSitePanelCollapsed] = useState(false)
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [speciesId, setSpeciesId] = useState<number | null>(null)
@@ -72,16 +75,43 @@ function App() {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="flex min-h-0 w-full shrink-0 flex-col gap-3 border-b border-stone-300 bg-stone-100 px-4 py-4 lg:w-[30rem] lg:border-r lg:border-b-0 lg:pl-6">
-          <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">
-            Fish Count Sites
-          </h2>
-
-          <div className="h-96 shrink-0 overflow-hidden rounded-xl border border-stone-300 lg:h-[28rem]">
-            <SiteMap features={mappable} selectedId={selectedId} onSelect={setSelectedId} />
+        <aside
+          className={`flex min-h-0 w-full shrink-0 flex-col border-b border-stone-300 bg-stone-100 lg:border-r lg:border-b-0 ${
+            sitePanelCollapsed ? 'gap-0 px-2 py-3 lg:w-12' : 'gap-3 px-4 py-4 lg:w-[30rem] lg:pl-6'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            {!sitePanelCollapsed && (
+              <h2 className="text-xs font-semibold tracking-wide text-stone-500 uppercase">
+                Fish Count Sites
+              </h2>
+            )}
+            <button
+              type="button"
+              onClick={() => setSitePanelCollapsed((c) => !c)}
+              aria-label={sitePanelCollapsed ? 'Expand site panel' : 'Collapse site panel'}
+              aria-expanded={!sitePanelCollapsed}
+              className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-stone-500 hover:bg-stone-200 hover:text-stone-900"
+            >
+              <ChevronLeftIcon
+                className={`h-4 w-4 transition-transform ${sitePanelCollapsed ? 'rotate-180' : ''}`}
+              />
+            </button>
           </div>
 
-          <SiteList sites={sites} selectedId={selectedId} onSelect={setSelectedId} />
+          {!sitePanelCollapsed && (
+            <>
+              {/* isolate: Leaflet's own CSS gives its controls z-index:1000
+                  with nothing to contain it — without a stacking context here
+                  that leaks out and floats above app UI like the chart modal,
+                  no matter how high that UI's own z-index is set. */}
+              <div className="isolate h-96 shrink-0 overflow-hidden rounded-xl border border-stone-300 lg:h-[28rem]">
+                <SiteMap features={mappable} selectedId={selectedId} onSelect={setSelectedId} />
+              </div>
+
+              <SiteList sites={sites} selectedId={selectedId} onSelect={setSelectedId} />
+            </>
+          )}
         </aside>
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col">

@@ -31,6 +31,33 @@ export function ChevronDownIcon(props: IconProps) {
   )
 }
 
+/** Collapse/expand affordance for a side panel. */
+export function ChevronLeftIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M15 6l-6 6 6 6" />
+    </IconBase>
+  )
+}
+
+/** Expand a chart tile to full screen. */
+export function MaximizeIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
+    </IconBase>
+  )
+}
+
+/** Close a dialog. */
+export function CloseIcon(props: IconProps) {
+  return (
+    <IconBase {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </IconBase>
+  )
+}
+
 /** Total run: an upward trend line. */
 export function TrendingUpIcon(props: IconProps) {
   return (
