@@ -14,7 +14,7 @@ type Props = {
   onChange: (speciesId: number | null) => void
 }
 
-type Option = { id: number | null; name: string }
+type Option = { id: number; name: string }
 
 /** A styled stand-in for the native <select>, scoped to whatever species the
  *  selected site actually has a series for — picking one that leads nowhere
@@ -27,6 +27,11 @@ type Option = { id: number | null; name: string }
  *  or while that site's series are still loading — an empty dropdown while
  *  waiting would look broken, and every species is a valid pick with no site
  *  chosen to scope it against.
+ *
+ *  There is no "All species" option — a value outside what's currently
+ *  offered (nothing picked yet, or a site switch that dropped the previous
+ *  pick) snaps to the first option instead, so the dropdown always names a
+ *  real, in-range choice.
  */
 export default function SpeciesSelect({ species, locationId, value, onChange }: Props) {
   const { data: siteSeries } = useApi<Series[]>(
@@ -38,9 +43,19 @@ export default function SpeciesSelect({ species, locationId, value, onChange }: 
       ? species
       : species.filter((sp) => siteSeries.some((s) => s.species_id === sp.species_id))
 
-  const options: Option[] = [{ id: null, name: 'All species' }, ...available.map((sp) => ({ id: sp.species_id, name: sp.name }))]
+  const options: Option[] = available.map((sp) => ({ id: sp.species_id, name: sp.name }))
   const selectedIndex = Math.max(0, options.findIndex((o) => o.id === value))
   const selected = options.find((o) => o.id === value) ?? options[0]
+
+  const firstOptionId = options[0]?.id
+  useEffect(() => {
+    if (firstOptionId !== undefined && !options.some((o) => o.id === value)) {
+      onChange(firstOptionId)
+    }
+    // Re-check whenever the option set's shape or the current value changes —
+    // not `options` itself, which is a fresh array every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstOptionId, options.length, value, onChange])
 
   const [open, setOpen] = useState(false)
   const [highlighted, setHighlighted] = useState(selectedIndex)
@@ -88,7 +103,7 @@ export default function SpeciesSelect({ species, locationId, value, onChange }: 
         }}
         className={`${CONTROL} flex min-w-44 cursor-pointer items-center justify-between gap-2 bg-white text-left`}
       >
-        <span>{selected.name}</span>
+        <span>{selected?.name ?? 'Loading…'}</span>
         <ChevronDownIcon className="h-4 w-4 shrink-0 text-stone-500" />
       </button>
 
@@ -116,7 +131,7 @@ export default function SpeciesSelect({ species, locationId, value, onChange }: 
         >
           {options.map((o, i) => (
             <li
-              key={o.id ?? 'all'}
+              key={o.id}
               role="option"
               aria-selected={o.id === value}
               onMouseEnter={() => setHighlighted(i)}
