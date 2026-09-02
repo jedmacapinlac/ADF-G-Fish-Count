@@ -26,7 +26,9 @@ export default function DailyCounts({ locationId, speciesId, year }: Props) {
         <p className="text-sm text-stone-700">No daily counts for {year}.</p>
       )}
 
-      {rows.length > 0 && <DailyCountsGallery rows={rows} year={year} />}
+      {rows.length > 0 && (
+        <DailyCountsGallery locationId={locationId} speciesId={speciesId} rows={rows} year={year} />
+      )}
     </section>
   )
 }
