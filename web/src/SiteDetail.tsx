@@ -1,5 +1,4 @@
-import KeyDetails from './KeyDetails'
-import SeriesData from './SeriesData'
+import SeriesPanel from './SeriesPanel'
 import { useApi } from './useApi'
 import type { LocationFeature, Series } from './types'
 
@@ -56,13 +55,13 @@ export default function SiteDetail({ site, speciesId, yearFrom, yearTo }: Props)
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto p-6">
-      {/* Keyed on the series so the year picker resets when the selection
+      {/* Keyed on the series so the shared year resets when the selection
           changes — a year held over from a site with a longer record could fall
           outside the new one entirely. */}
-      <KeyDetails key={`${locationId}-${speciesId}`} site={site} series={match} />
-      <SeriesData
-        locationId={locationId}
-        speciesId={speciesId}
+      <SeriesPanel
+        key={`${locationId}-${speciesId}`}
+        site={site}
+        series={match}
         yearFrom={yearFrom}
         yearTo={yearTo}
       />

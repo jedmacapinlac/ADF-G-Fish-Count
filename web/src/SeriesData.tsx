@@ -10,6 +10,9 @@ type Props = {
   speciesId: number
   yearFrom: number
   yearTo: number
+  /** The single season Daily Counts reads, shared with KeyDetails above —
+   *  see SeriesPanel. */
+  year: number
 }
 
 /** The tabbed views of one series.
@@ -18,18 +21,18 @@ type Props = {
  *  first opened rather than all of them on load. Tab state lives here, and
  *  SiteDetail is keyed on the site, so changing sites resets it to the first tab.
  */
-export default function SeriesData({ locationId, speciesId, yearFrom, yearTo }: Props) {
+export default function SeriesData({ locationId, speciesId, yearFrom, yearTo, year }: Props) {
   const [tab, setTab] = useState<TabId>('run-overview')
 
-  const panelProps = { locationId, speciesId, yearFrom, yearTo }
+  const rangeProps = { locationId, speciesId, yearFrom, yearTo }
 
   return (
     <div className="mt-6">
       <Tabs active={tab} onChange={setTab} />
 
       <div className="pt-4">
-        {tab === 'run-overview' && <RunOverview {...panelProps} />}
-        {tab === 'daily-counts' && <DailyCounts {...panelProps} />}
+        {tab === 'run-overview' && <RunOverview {...rangeProps} />}
+        {tab === 'daily-counts' && <DailyCounts locationId={locationId} speciesId={speciesId} year={year} />}
         {tab === 'timing' && (
           <Unbuilt>
             Run timing — daily counts aligned by day of year, one line per year. The rows for this

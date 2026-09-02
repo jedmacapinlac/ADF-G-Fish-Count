@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 import { formatDate, seriesLabel } from './format'
 import {
   CalendarCheckIcon,
@@ -17,14 +15,20 @@ import type { AnnualRow, CountRow, LocationFeature, Series } from './types'
 type Props = {
   site: LocationFeature
   series: Series
+  /** Shared with the Daily Counts tab's per-day chart — both read the same
+   *  selected season. Owned by SeriesPanel, not this component, so the two
+   *  stay in sync. */
+  year: number
+  onYearChange: (year: number) => void
 }
 
 /** The top half of the right panel: what is selected, one year of it, and six
  *  figures about that year.
  *
- *  This section has its own year, separate from the filter bar's range — the
- *  cards describe a single season, while the tabs below cover the range. Both
- *  are labelled so the two are not mistaken for each other.
+ *  This section's year is separate from the filter bar's range — the cards
+ *  describe a single season, while most tabs below cover the range (Daily
+ *  Counts follows this same year instead — see SeriesPanel). Both are
+ *  labelled so they're not mistaken for each other.
  *
  *  ── Wiring the cards ──────────────────────────────────────────────────────
  *  Every value is null, which renders as an em dash. Fetch what they need at
@@ -36,10 +40,7 @@ type Props = {
  *  and season span need the daily rows, so /api/counts for that one year.
  *  Neither needs a new endpoint.
  */
-export default function KeyDetails({ site, series }: Props) {
-  // Most recent season first — the default anyone wants on opening a site.
-  const [year, setYear] = useState(series.last_year)
-
+export default function KeyDetails({ site, series, year, onYearChange }: Props) {
   const { data: annual, error: annualError } = useApi<AnnualRow[]>(
     `/api/annual?location_id=${site.properties.location_id}&species_id=${series.species_id}`
   )
@@ -136,7 +137,7 @@ export default function KeyDetails({ site, series }: Props) {
           <span className={LABEL}>Year</span>
           <select
             value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
+            onChange={(e) => onYearChange(Number(e.target.value))}
             className={`${CONTROL} w-28`}
           >
             {years.map((y) => (
