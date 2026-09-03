@@ -24,7 +24,7 @@ export default function ChartModal({ title, onClose, children }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60"
       onClick={onClose}
     >
       <div
@@ -32,7 +32,7 @@ export default function ChartModal({ title, onClose, children }: Props) {
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="flex h-[85vh] w-full max-w-4xl flex-col rounded-xl border border-stone-300 bg-stone-50 p-5 shadow-2xl"
+        className="flex h-screen w-screen flex-col bg-stone-50 p-5 shadow-2xl"
       >
         <div className="flex items-center justify-between gap-2">
           <p className="text-base font-semibold text-stone-900">{title}</p>

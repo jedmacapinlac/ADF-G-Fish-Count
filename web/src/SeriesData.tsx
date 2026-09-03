@@ -3,6 +3,7 @@ import { useState } from 'react'
 import DailyCounts from './DailyCounts'
 import RunOverview from './RunOverview'
 import Tabs from './Tabs'
+import TimingGallery from './TimingGallery'
 import type { TabId } from './seriesTabs'
 
 type Props = {
@@ -34,10 +35,13 @@ export default function SeriesData({ locationId, speciesId, yearFrom, yearTo, ye
         {tab === 'run-overview' && <RunOverview {...rangeProps} />}
         {tab === 'daily-counts' && <DailyCounts locationId={locationId} speciesId={speciesId} year={year} />}
         {tab === 'timing' && (
-          <Unbuilt>
-            Run timing — daily counts aligned by day of year, one line per year. The rows for this
-            already come back from /api/counts; the work is grouping them by year and drawing them.
-          </Unbuilt>
+          <TimingGallery
+            locationId={locationId}
+            speciesId={speciesId}
+            yearFrom={yearFrom}
+            yearTo={yearTo}
+            year={year}
+          />
         )}
         {tab === 'compare-sites' && (
           <Unbuilt>
