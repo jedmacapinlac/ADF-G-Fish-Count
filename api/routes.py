@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from sqlalchemy import text
 
 from .db import engine
@@ -6,7 +6,7 @@ from .db import engine
 router = APIRouter(prefix="/api", tags=["fish counts"])
 
 @router.get("/locations")
-def list_locations():
+def list_locations(species_id: int | None = None):
     """GeoJSON FeatureCollection of the counting sites — drives the map.
 
     One feature per location: a Point geometry built from locations.latitude /
@@ -19,18 +19,37 @@ def list_locations():
     and it keeps the site present in the response for non-map views.
 
     Note: GeoJSON coordinates are [longitude, latitude], not [lat, lon].
+
+    species_id is optional: when given, only sites that have a series for
+    that species are returned — this is what scopes the Compare Sites picker
+    to sites that are actually comparable.
     """
 
     with engine.connect() as conn:
-        rows = conn.execute(
-            text("""
-                SELECT name,
-                    latitude,
-                    longitude,
-                    location_id
-                FROM locations
-            """)
-        ).mappings().all()
+        if species_id is None:
+            rows = conn.execute(
+                text("""
+                    SELECT name,
+                        latitude,
+                        longitude,
+                        location_id
+                    FROM locations
+                """)
+            ).mappings().all()
+        else:
+            rows = conn.execute(
+                text("""
+                    SELECT l.name,
+                        l.latitude,
+                        l.longitude,
+                        l.location_id
+                    FROM locations l
+                    JOIN series s USING (location_id)
+                    WHERE s.species_id = :species_id
+                """),
+                {"species_id": species_id},
+            ).mappings().all()
+
         features = []
         for row in rows:
             if row["latitude"] is None or row["longitude"] is None:
@@ -82,16 +101,53 @@ def list_series_for_location(location_id: int):
         ).mappings().all()
     return [dict(row) for row in rows]
 
-
+@router.get("/timing")
+def get_timing(location_id: int, species_id: int, year_from: int, year_to: int):
+    """
+    Calculates how run builds up over season, day by day for a single site and species for a given year range.
+    """
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                WITH counted_days AS (
+                    SELECT year,
+                        count_date,
+                        fish_count
+                    FROM daily_counts
+                    WHERE location_id = :location_id
+                    AND species_id = :species_id
+                    AND year >= :year_from
+                    AND year <= :year_to
+                    AND fish_count IS NOT NULL
+                )
+                SELECT
+                    year,
+                    count_date,
+                    EXTRACT(DOY FROM count_date)::int AS day_of_year,
+                    SUM(fish_count) OVER (
+                        PARTITION BY year
+                        ORDER BY count_date
+                    ) AS cumulative_count,
+                    ROUND(
+                        100.0 * SUM(fish_count) OVER (PARTITION BY year ORDER BY count_date)
+                        / NULLIF(SUM(fish_count) OVER (PARTITION BY year), 0),
+                        2
+                    ) AS pct_of_total
+                FROM counted_days
+                ORDER BY year, count_date;
+            """),
+            {"location_id": location_id,
+            "species_id": species_id,
+            "year_from": year_from,
+            "year_to": year_to,
+            }            
+        ).mappings().all()
+    return [dict(row) for row in rows]
+        
 @router.get("/counts")
 def list_counts(location_id: int, species_id: int, year_from: int, year_to: int):
-    """Daily counts for one series over a year range — what the chart draws.
-
-    Open decisions:
-      - Are year bounds inclusive?
-      - Is there a maximum span a caller may request?
-      - Array of objects, or parallel arrays of dates and values?
-      - Empty result for a nonexistent series: 404, or 200 with an empty list?
+    """
+    Daily counts for one series over a year range — what the chart draws.
 
     fish_count is nullable: NULL means no count was taken that day, which is
     different from 0. Do not coerce one into the other.
@@ -143,4 +199,88 @@ def list_annual(location_id: int, species_id: int):
             }
         ).mappings().all()
         return [dict(row) for row in rows]
+
+
+@router.get("/annual/compare")
+def compare_annual(
+    species_id: int,
+    location_id: list[int] = Query(...),
+    year_from: int | None = None,
+    year_to: int | None = None,
+):
+    """Per-year totals for one species across several sites at once.
+
+    The multi-location version of /annual — one grouped query instead of one
+    request per site, per its docstring's own note that /annual is "the
+    basis for site comparison". year_from/year_to are optional so the full
+    range each site has is included when the caller doesn't narrow it.
+    """
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT location_id,
+                       year,
+                       SUM(fish_count) AS total_count,
+                       MAX(fish_count) AS peak_count
+                FROM daily_counts
+                WHERE species_id = :species_id
+                  AND location_id = ANY(:location_ids)
+                  AND (:year_from IS NULL OR year >= :year_from)
+                  AND (:year_to IS NULL OR year <= :year_to)
+                GROUP BY location_id, year
+                ORDER BY location_id, year
+            """),
+            {
+                "species_id": species_id,
+                "location_ids": location_id,
+                "year_from": year_from,
+                "year_to": year_to,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+@router.get("/timing/compare")
+def compare_timing(species_id: int, year: int, location_id: list[int] = Query(...)):
+    """How the run builds up over one season, for several sites at once.
+
+    The multi-location version of /timing, scoped to a single year rather
+    than a range — comparing run *shape* across sites for one season, not an
+    average blurred across several.
+    """
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                WITH counted_days AS (
+                    SELECT location_id,
+                        count_date,
+                        fish_count
+                    FROM daily_counts
+                    WHERE species_id = :species_id
+                    AND year = :year
+                    AND location_id = ANY(:location_ids)
+                    AND fish_count IS NOT NULL
+                )
+                SELECT
+                    location_id,
+                    EXTRACT(DOY FROM count_date)::int AS day_of_year,
+                    SUM(fish_count) OVER (
+                        PARTITION BY location_id
+                        ORDER BY count_date
+                    ) AS cumulative_count,
+                    ROUND(
+                        100.0 * SUM(fish_count) OVER (PARTITION BY location_id ORDER BY count_date)
+                        / NULLIF(SUM(fish_count) OVER (PARTITION BY location_id), 0),
+                        2
+                    ) AS pct_of_total
+                FROM counted_days
+                ORDER BY location_id, count_date;
+            """),
+            {
+                "species_id": species_id,
+                "year": year,
+                "location_ids": location_id,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows]
 
