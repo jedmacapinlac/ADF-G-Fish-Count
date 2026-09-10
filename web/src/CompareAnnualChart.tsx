@@ -122,12 +122,11 @@ export default function CompareAnnualChart({ rows, sites }: Props) {
   const [mode, setMode] = useState<Mode>('total')
   const averages = siteAverages(rows)
   const data = pivot(rows, sites, mode, averages)
-  const tickEvery = Math.max(1, Math.ceil(data.length / 10))
   const ChartTooltip = makeTooltip(sites, mode)
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex justify-end">
+      <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex rounded-lg border border-stone-300 p-0.5 text-xs">
           {(['total', 'relative'] as const).map((m) => (
             <button
@@ -151,17 +150,19 @@ export default function CompareAnnualChart({ rows, sites }: Props) {
             <CartesianGrid vertical={false} stroke="#e1e0d9" />
             <XAxis
               dataKey="year"
+              type="number"
+              domain={['dataMin', 'dataMax']}
+              allowDecimals={false}
               tickLine={false}
               axisLine={{ stroke: '#c3c2b7' }}
               tick={{ fill: '#78716c', fontSize: 10 }}
-              interval={tickEvery - 1}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
               tick={{ fill: '#78716c', fontSize: 10 }}
-              tickFormatter={(value: number) => (mode === 'total' ? formatCompact(value) : `${value}%`)}
-              width={mode === 'total' ? 40 : 36}
+              tickFormatter={(value: number) => (mode === 'total' ? formatCompact(value) : `${Math.round(value)}%`)}
+              width={mode === 'total' ? 40 : 48}
             />
             <Tooltip content={<ChartTooltip />} cursor={{ fill: '#e1e0d9', opacity: 0.4 }} />
             <Legend

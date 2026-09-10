@@ -65,7 +65,6 @@ function makeTooltip(sites: SiteRef[]) {
  *  already reports and doesn't need a chart). */
 export default function CompareDaysCountedChart({ rows, sites }: Props) {
   const data = pivot(rows, sites)
-  const tickEvery = Math.max(1, Math.ceil(data.length / 10))
   const ChartTooltip = makeTooltip(sites)
 
   return (
@@ -74,10 +73,12 @@ export default function CompareDaysCountedChart({ rows, sites }: Props) {
         <CartesianGrid vertical={false} stroke="#e1e0d9" />
         <XAxis
           dataKey="year"
+          type="number"
+          domain={['dataMin', 'dataMax']}
+          allowDecimals={false}
           tickLine={false}
           axisLine={{ stroke: '#c3c2b7' }}
           tick={{ fill: '#78716c', fontSize: 10 }}
-          interval={tickEvery - 1}
         />
         <YAxis
           tickLine={false}
