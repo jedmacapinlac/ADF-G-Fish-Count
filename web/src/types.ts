@@ -70,6 +70,7 @@ export type CompareAnnualRow = {
   location_id: number
   year: number
   total_count: number | null
+  days_counted: number
   peak_count: number | null
 }
 

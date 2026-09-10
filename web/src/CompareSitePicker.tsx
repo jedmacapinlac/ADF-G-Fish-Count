@@ -13,13 +13,18 @@ type Props = {
   excludeId: number
   selectedIds: number[]
   onChange: (ids: number[]) => void
+  /** Omits the "Compare against" label — for when the parent already shows
+   *  its own heading, e.g. CompareSites.tsx's collapsible panel header. */
+  hideLabel?: boolean
 }
 
 /** A compact checklist for picking sites to compare against the primary one.
- *  Sized to sit inside a tab panel rather than the sidebar's full height —
- *  see SiteList.tsx for the fuller single-select version this borrows its
- *  search-filter pattern from. */
-export default function CompareSitePicker({ sites, excludeId, selectedIds, onChange }: Props) {
+ *  Meant to sit in a fixed-width side column next to the comparison charts
+ *  (see CompareSites.tsx) so selecting more sites only grows this column's
+ *  own scroll area, never pushes the charts down. See SiteList.tsx for the
+ *  fuller single-select version this borrows its search-filter pattern
+ *  from. */
+export default function CompareSitePicker({ sites, excludeId, selectedIds, onChange, hideLabel = false }: Props) {
   const [query, setQuery] = useState('')
 
   const options = useMemo(
@@ -44,11 +49,11 @@ export default function CompareSitePicker({ sites, excludeId, selectedIds, onCha
   }
 
   return (
-    <div className="max-w-md">
-      <label className={LABEL}>Compare against</label>
+    <div className="w-full">
+      {!hideLabel && <label className={LABEL}>Compare against</label>}
 
       {selectedSites.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
           {selectedSites.map((f) => (
             <button
               key={f.properties.location_id}

@@ -43,6 +43,14 @@ export function formatDate(value: string, { year = false }: { year?: boolean } =
  *  carry it, which keeps a separate Run column from being necessary without
  *  assuming which form species.name holds.
  */
+/** day_of_year (1-366) -> "Jul 8", using a fixed non-leap reference year —
+ *  only the month/day matters here, since these charts compare the shape of
+ *  a season rather than any one specific year's calendar. */
+export function dayOfYearLabel(day: number): string {
+  const reference = new Date(Date.UTC(2001, 0, day))
+  return reference.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+
 export function seriesLabel(series: Series): string {
   const { species_name, run } = series
   if (run === null) return species_name

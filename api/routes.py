@@ -200,7 +200,6 @@ def list_annual(location_id: int, species_id: int):
         ).mappings().all()
         return [dict(row) for row in rows]
 
-
 @router.get("/annual/compare")
 def compare_annual(
     species_id: int,
@@ -220,8 +219,9 @@ def compare_annual(
             text("""
                 SELECT location_id,
                        year,
-                       SUM(fish_count) AS total_count,
-                       MAX(fish_count) AS peak_count
+                       SUM(fish_count)   AS total_count,
+                       COUNT(fish_count) AS days_counted,
+                       MAX(fish_count)   AS peak_count
                 FROM daily_counts
                 WHERE species_id = :species_id
                   AND location_id = ANY(:location_ids)

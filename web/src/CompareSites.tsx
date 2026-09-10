@@ -2,8 +2,10 @@ import { useState } from 'react'
 
 import ChartTileGallery from './ChartTileGallery'
 import CompareAnnualChart, { type SiteRef } from './CompareAnnualChart'
+import CompareDaysCountedChart from './CompareDaysCountedChart'
 import CompareSitePicker from './CompareSitePicker'
 import CompareTimingChart from './CompareTimingChart'
+import { ChevronLeftIcon } from './icons'
 import { useApi } from './useApi'
 import type { CompareAnnualRow, CompareTimingRow, LocationCollection } from './types'
 
@@ -31,6 +33,7 @@ export default function CompareSites({ locationId, speciesId, yearFrom, yearTo, 
     `/api/locations?species_id=${speciesId}`,
   )
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [collapsed, setCollapsed] = useState(false)
 
   const allSites = collection?.features ?? []
   const otherSites = allSites.filter((f) => f.properties.location_id !== locationId)
@@ -73,27 +76,65 @@ export default function CompareSites({ locationId, speciesId, yearFrom, yearTo, 
       )}
 
       {collection !== null && otherSites.length > 0 && (
-        <>
-          <CompareSitePicker
-            sites={allSites}
-            excludeId={locationId}
-            selectedIds={selectedIds}
-            onChange={setSelectedIds}
-          />
+        <div className="flex items-start gap-6">
+          <div
+            className={`shrink-0 rounded-lg border border-stone-300 bg-stone-100 p-3 ${collapsed ? 'w-11' : 'w-64'}`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              {!collapsed && (
+                <span className="text-xs font-semibold tracking-wide text-stone-500 uppercase">
+                  Compare against
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setCollapsed((c) => !c)}
+                aria-label={collapsed ? 'Expand site picker' : 'Collapse site picker'}
+                aria-expanded={!collapsed}
+                className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-stone-500 hover:bg-stone-200 hover:text-stone-900"
+              >
+                <ChevronLeftIcon
+                  className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`}
+                />
+              </button>
+            </div>
 
-          {selectedIds.length === 0 && (
-            <p className="mt-4 text-sm text-stone-700">Select one or more sites above to compare.</p>
-          )}
+            {collapsed && selectedIds.length > 0 && (
+              <p className="mt-2 text-center text-xs font-semibold text-stone-600">{selectedIds.length}</p>
+            )}
 
-          {selectedIds.length > 0 && (
-            <ChartTileGallery
-              charts={[
-                { title: 'Total Run by Year', node: <CompareAnnualChart rows={annualRows ?? []} sites={sites} /> },
-                { title: `Run Timing (${year})`, node: <CompareTimingChart rows={timingRows ?? []} sites={sites} /> },
-              ]}
-            />
-          )}
-        </>
+            {!collapsed && (
+              <div className="mt-2">
+                <CompareSitePicker
+                  sites={allSites}
+                  excludeId={locationId}
+                  selectedIds={selectedIds}
+                  onChange={setSelectedIds}
+                  hideLabel
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            {selectedIds.length === 0 && (
+              <p className="text-sm text-stone-700">Select one or more sites to compare.</p>
+            )}
+
+            {selectedIds.length > 0 && (
+              <ChartTileGallery
+                charts={[
+                  { title: 'Total Run by Year', node: <CompareAnnualChart rows={annualRows ?? []} sites={sites} /> },
+                  { title: `Run Timing (${year})`, node: <CompareTimingChart rows={timingRows ?? []} sites={sites} /> },
+                  {
+                    title: 'Days Counted by Year',
+                    node: <CompareDaysCountedChart rows={annualRows ?? []} sites={sites} />,
+                  },
+                ]}
+              />
+            )}
+          </div>
+        </div>
       )}
     </section>
   )

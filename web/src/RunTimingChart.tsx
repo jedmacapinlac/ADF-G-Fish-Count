@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
-import { formatDate } from './format'
+import { dayOfYearLabel, formatDate } from './format'
 import { CONTROL, LABEL } from './styles'
 import { useApi } from './useApi'
 import type { TimingRow } from './types'
@@ -33,14 +33,6 @@ function toWideRows(rows: TimingRow[]): WideRow[] {
     byDay.set(row.day_of_year, entry)
   }
   return [...byDay.values()].sort((a, b) => a.day_of_year - b.day_of_year)
-}
-
-/** day_of_year -> "Jul 8", using a fixed non-leap reference year — only the
- *  month/day matters here, the season is what's being compared, not a
- *  specific year. */
-function dayOfYearLabel(day: number): string {
-  const reference = new Date(Date.UTC(2001, 0, day))
-  return reference.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
 type TooltipProps = {
