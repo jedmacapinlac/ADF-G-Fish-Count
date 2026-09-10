@@ -62,3 +62,23 @@ export type TimingRow = {
   cumulative_count: number
   pct_of_total: number | null
 }
+
+/** A row from /api/annual/compare — one site's total for one year, alongside
+ *  the same rows for every other site being compared. Same null semantics as
+ *  AnnualRow: a year with no counts at that site is null, not zero. */
+export type CompareAnnualRow = {
+  location_id: number
+  year: number
+  total_count: number | null
+  peak_count: number | null
+}
+
+/** A row from /api/timing/compare — one site's counted day within a single
+ *  selected season, alongside the same rows for every other site being
+ *  compared. Same exclusion/null rules as TimingRow. */
+export type CompareTimingRow = {
+  location_id: number
+  day_of_year: number
+  cumulative_count: number
+  pct_of_total: number | null
+}

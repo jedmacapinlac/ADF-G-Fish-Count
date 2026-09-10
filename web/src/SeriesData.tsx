@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import CompareSites from './CompareSites'
 import DailyCounts from './DailyCounts'
 import RunOverview from './RunOverview'
 import Tabs from './Tabs'
@@ -44,11 +45,14 @@ export default function SeriesData({ locationId, speciesId, yearFrom, yearTo, ye
           />
         )}
         {tab === 'compare-sites' && (
-          <Unbuilt>
-            This species across other sites. Nothing on the page holds that data, and asking
-            /api/annual once per site would be ~100 requests — it needs a route that aggregates
-            across locations in SQL.
-          </Unbuilt>
+          <CompareSites
+            key={speciesId}
+            locationId={locationId}
+            speciesId={speciesId}
+            yearFrom={yearFrom}
+            yearTo={yearTo}
+            year={year}
+          />
         )}
         {tab === 'statistics' && (
           <Unbuilt>
