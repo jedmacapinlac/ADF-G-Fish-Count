@@ -3,6 +3,7 @@ import { useState } from 'react'
 import CompareSites from './CompareSites'
 import DailyCounts from './DailyCounts'
 import RunOverview from './RunOverview'
+import Statistics from './Statistics'
 import Tabs from './Tabs'
 import TimingGallery from './TimingGallery'
 import type { TabId } from './seriesTabs'
@@ -54,19 +55,8 @@ export default function SeriesData({ locationId, speciesId, yearFrom, yearTo, ye
             year={year}
           />
         )}
-        {tab === 'statistics' && (
-          <Unbuilt>
-            Summary figures for the series — mean and median run size, year-over-year change, best
-            and worst years. All derivable from the /api/annual rows the Run Overview tab already
-            fetches.
-          </Unbuilt>
-        )}
+        {tab === 'statistics' && <Statistics {...rangeProps} year={year} />}
       </div>
     </div>
   )
-}
-
-/** A tab that exists but has no content yet, with a note on what would fill it. */
-function Unbuilt({ children }: { children: React.ReactNode }) {
-  return <p className="max-w-2xl text-sm text-stone-500">{children}</p>
 }
