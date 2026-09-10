@@ -1,29 +1,33 @@
 import { CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 import { colorForCompareIndex, PRIMARY_COLOR } from './compareColors'
-import { dayOfYearLabel } from './format'
+import { dayOfYearLabel, formatCompact } from './format'
 import type { CompareTimingRow } from './types'
 import type { SiteRef } from './CompareAnnualChart'
 
 type Props = {
   rows: CompareTimingRow[]
   /** The primary site first, then comparison sites in selection order — same
-   *  ordering contract as CompareAnnualChart. */
+   *  ordering contract as CompareAnnualChart/CompareTimingChart. */
   sites: SiteRef[]
 }
 
 type PlotRow = { day_of_year: number } & Record<string, number | null>
 
-/** One row per day-of-year across every selected site's pct_of_total, keyed
- *  by location_id. A site with no counted day at a given day_of_year has no
- *  key set, which Line renders as a gap via connectNulls={false}. */
+/** One row per day-of-year across every selected site's running total,
+ *  keyed by location_id. Same source rows as CompareTimingChart (one
+ *  /api/timing/compare fetch, scoped to a single season), plotting the raw
+ *  cumulative_count instead of pct_of_total — run size building up over the
+ *  season, not just its share of the eventual total. A site with no counted
+ *  day at a given day_of_year has no key set, which Line renders as a gap
+ *  via connectNulls={false}. */
 function pivot(rows: CompareTimingRow[], sites: SiteRef[]): PlotRow[] {
   const days = [...new Set(rows.map((r) => r.day_of_year))].sort((a, b) => a - b)
   return days.map((day_of_year) => {
     const row: PlotRow = { day_of_year }
     for (const site of sites) {
       const match = rows.find((r) => r.location_id === site.location_id && r.day_of_year === day_of_year)
-      row[String(site.location_id)] = match?.pct_of_total ?? null
+      row[String(site.location_id)] = match?.cumulative_count ?? null
     }
     return row
   })
@@ -47,7 +51,7 @@ function makeTooltip(sites: SiteRef[]) {
           return (
             <p key={p.dataKey} className="flex items-center gap-1.5 text-sm font-semibold text-white">
               <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: p.color }} />
-              {site.name}: {p.value.toFixed(1)}%
+              {site.name}: {p.value.toLocaleString()}
             </p>
           )
         })}
@@ -56,13 +60,13 @@ function makeTooltip(sites: SiteRef[]) {
   }
 }
 
-/** Cumulative share of the season's total run, by day-of-year, overlaid
- *  across sites — compares run *shape/timing* rather than run size. Scoped
- *  to a single selected season (the same `year` the Daily Counts tab uses),
- *  since averaging timing curves across a multi-year range would blur
- *  exactly what this chart is meant to show. See CompareCumulativeChart.tsx
- *  for the raw-count version of the same underlying rows. */
-export default function CompareTimingChart({ rows, sites }: Props) {
+/** Running total for one season, overlaid across sites — the multi-site
+ *  version of CumulativeCountChart.tsx (Daily Counts tab), for the same
+ *  single selected `year`. Unlike that chart, there's no historical-median
+ *  overlay here: the comparison axis is other sites, not past years. See
+ *  CompareTimingChart.tsx for the same underlying rows plotted as each
+ *  site's share of its own eventual total instead. */
+export default function CompareCumulativeChart({ rows, sites }: Props) {
   const data = pivot(rows, sites)
   const ChartTooltip = makeTooltip(sites)
 
@@ -83,8 +87,8 @@ export default function CompareTimingChart({ rows, sites }: Props) {
           tickLine={false}
           axisLine={false}
           tick={{ fill: '#78716c', fontSize: 10 }}
-          tickFormatter={(value: number) => `${value}%`}
-          width={36}
+          tickFormatter={(value: number) => formatCompact(value)}
+          width={40}
         />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: '#e1e0d9', opacity: 0.4 }} />
         <Legend

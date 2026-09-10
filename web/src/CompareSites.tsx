@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import ChartTileGallery from './ChartTileGallery'
 import CompareAnnualChart, { type SiteRef } from './CompareAnnualChart'
+import CompareCumulativeChart from './CompareCumulativeChart'
 import CompareDaysCountedChart from './CompareDaysCountedChart'
 import CompareSitePicker from './CompareSitePicker'
 import CompareTimingChart from './CompareTimingChart'
@@ -126,6 +127,10 @@ export default function CompareSites({ locationId, speciesId, yearFrom, yearTo, 
                 charts={[
                   { title: 'Total Run by Year', node: <CompareAnnualChart rows={annualRows ?? []} sites={sites} /> },
                   { title: `Run Timing (${year})`, node: <CompareTimingChart rows={timingRows ?? []} sites={sites} /> },
+                  {
+                    title: `Cumulative Count (${year})`,
+                    node: <CompareCumulativeChart rows={timingRows ?? []} sites={sites} />,
+                  },
                   {
                     title: 'Days Counted by Year',
                     node: <CompareDaysCountedChart rows={annualRows ?? []} sites={sites} />,
