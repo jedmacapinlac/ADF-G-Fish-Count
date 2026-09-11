@@ -52,8 +52,13 @@ function normalCdf(z: number): number {
  *  robust to a skewed/non-normal distribution like fish counts (unlike a
  *  least-squares fit, which RunTrendChart.tsx already draws for Run
  *  Overview). Returns null with fewer than MIN_TREND_YEARS points — too few
- *  to say anything meaningful about a trend. */
-export function mannKendall(years: number[], values: number[]): MannKendallResult | null {
+ *  to say anything meaningful about a trend.
+ *
+ *  Only relies on values being in chronological order, not the years
+ *  themselves (unlike sensSlope, which does need them for its per-year
+ *  slope) — `years` stays a parameter anyway so both functions take a
+ *  matching (years, values) pair from the caller's side. */
+export function mannKendall(_years: number[], values: number[]): MannKendallResult | null {
   const n = values.length
   if (n < MIN_TREND_YEARS) return null
 

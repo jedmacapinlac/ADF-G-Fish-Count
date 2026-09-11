@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Query
 from sqlalchemy import text
 
@@ -6,7 +8,7 @@ from .db import engine
 router = APIRouter(prefix="/api", tags=["fish counts"])
 
 @router.get("/locations")
-def list_locations(species_id: int | None = None):
+def list_locations(species_id: Optional[int] = None):
     """GeoJSON FeatureCollection of the counting sites — drives the map.
 
     One feature per location: a Point geometry built from locations.latitude /
@@ -204,8 +206,8 @@ def list_annual(location_id: int, species_id: int):
 def compare_annual(
     species_id: int,
     location_id: list[int] = Query(...),
-    year_from: int | None = None,
-    year_to: int | None = None,
+    year_from: Optional[int] = None,
+    year_to: Optional[int] = None,
 ):
     """Per-year totals for one species across several sites at once.
 

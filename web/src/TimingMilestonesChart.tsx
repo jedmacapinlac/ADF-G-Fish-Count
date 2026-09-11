@@ -118,7 +118,7 @@ export default function TimingMilestonesChart({ locationId, speciesId, year }: P
           // Milestones landing close in time get progressively longer leader
           // lines on their side, so near-duplicate dates don't stack labels
           // on top of each other.
-          const sameSide = milestones.filter((o, j) => j < i && j % 2 === i % 2).length
+          const sameSide = milestones.filter((_, j) => j < i && j % 2 === i % 2).length
           const stem = 20 + sameSide * 26
           const labelY = above ? BASELINE_Y - stem : BASELINE_Y + stem
 
